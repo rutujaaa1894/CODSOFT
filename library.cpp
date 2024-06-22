@@ -140,7 +140,8 @@ void calculateFine() {
     cin.ignore();  // Ignore leftover newline character
     cout << "Enter book ISBN to calculate fine: ";
     getline(cin, ISBN);
-    for (const auto& record : borrowHistory) {
+    for (const auto& record : borrowHistory)
+     {
         if (record.bookISBN == ISBN) {
             if (record.returnDate.empty())
              {

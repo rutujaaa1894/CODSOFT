@@ -1,218 +1,201 @@
 #include <iostream>
-#include <vector>
 #include <string>
 #include <ctime>
-#include <algorithm>
+#include <vector>
+#include <sstream>
 
 using namespace std;
 
 struct Book {
-    int id;
-    string title;
     string author;
-    string isbn;
-    bool isAvailable;
-
-    Book(int id, string title, string author, string isbn) 
-        : id(id), title(title), author(author), isbn(isbn), isAvailable(true) {}
+    string title;
+    string ISBN;
+    bool Available;
 };
 
-struct User {
-    int id;
+struct purchaser {
     string name;
-    vector<int> borrowedBooks;
-
-    User(int id, string name) : id(id), name(name) {}
+    string bookISBN;
+    string borrowDate;
+    string returnDate;
 };
 
-struct Transaction {
-    int userId;
-    int bookId;
-    time_t checkoutDate;
-    time_t returnDate;
+vector<Book> bookDatabase;
+vector<purchaser> borrowerDatabase;
+vector<purchaser> borrowHistory;
 
-    Transaction(int userId, int bookId, time_t checkoutDate) 
-        : userId(userId), bookId(bookId), checkoutDate(checkoutDate), returnDate(0) {}
-};
+// Helper function to calculate days between two dates
+int daysBetweenDates(const string& startDate, const string& endDate) {
+    int startDay, startMonth, startYear;
+    int endDay, endMonth, endYear;
+    char slash;
 
-class Library {
-private:
-    vector<Book> books;
-    vector<User> users;
-    vector<Transaction> transactions;
+    stringstream startStream(startDate);
+    startStream >> startDay >> slash >> startMonth >> slash >> startYear;
 
-    Book* findBookById(int bookId) {
-        for (auto &book : books) {
-            if (book.id == bookId) return &book;
-        }
-        return nullptr;
-    }
+    stringstream endStream(endDate);
+    endStream >> endDay >> slash >> endMonth >> slash >> endYear;
 
-    User* findUserById(int userId) {
-        for (auto &user : users) {
-            if (user.id == userId) return &user;
-        }
-        return nullptr;
-    }
+    tm start = {0, 0, 0, startDay, startMonth - 1, startYear - 1900};
+    tm end = {0, 0, 0, endDay, endMonth - 1, endYear - 1900};
+    
+    time_t startTime = mktime(&start);
+    time_t endTime = mktime(&end);
 
-public:
-    void addBook(int id, string title, string author, string isbn) {
-        books.emplace_back(id, title, author, isbn);
-    }
+    double difference = difftime(endTime, startTime) / (60 * 60 * 24);
+    return static_cast<int>(difference);
+}
 
-    void addUser(int id, string name) {
-        users.emplace_back(id, name);
-    }
+void addBook() {
+    Book book;
+    cin.ignore();  // Ignore leftover newline character
+    cout << "Enter book title: ";
+    getline(cin, book.title);
+    cout << "Enter book author: ";
+    getline(cin, book.author);
+    cout << "Enter book ISBN: ";
+    getline(cin, book.ISBN);
+    book. Available = true;
+    bookDatabase.push_back(book);
+    cout << "Book added successfully!" << endl;
+}
 
-    void searchBook(string keyword) {
-        for (const auto &book : books) {
-            if (book.title.find(keyword) != string::npos || book.author.find(keyword) != string::npos || book.isbn.find(keyword) != string::npos) {
-                cout << "Book ID: " << book.id << ", Title: " << book.title << ", Author: " << book.author << ", ISBN: " << book.isbn << ", Available: " << (book.isAvailable ? "Yes" : "No") << endl;
-            }
-        }
-    }
 
-    void checkoutBook(int userId, int bookId) {
-        Book* book = findBookById(bookId);
-        User* user = findUserById(userId);
-        if (book && user && book->isAvailable) {
-            book->isAvailable = false;
-            user->borrowedBooks.push_back(bookId);
-            time_t now = time(0);
-            transactions.push_back({userId, bookId, now});
+void checkoutBook() {
+    string ISBN;
+    cin.ignore();  // Ignore leftover newline character
+    cout << "Enter book ISBN to checkout: ";
+    getline(cin, ISBN);
+    for (auto& book : bookDatabase) {
+        if (book.ISBN == ISBN && book. Available) {
+            book. Available = false;
+            purchaser borrower;
+            cout << "Enter borrower name: ";
+            getline(cin, borrower.name);
+            cout << "Enter borrow date (DD/MM/YYYY): ";
+            getline(cin, borrower.borrowDate);
+            borrower.bookISBN = ISBN;
+            borrower.returnDate = "";  // Initialize return date
+            borrowerDatabase.push_back(borrower);
+            borrowHistory.push_back(borrower);  // Add to history
             cout << "Book checked out successfully!" << endl;
-        } else {
-            cout << "Checkout failed. Book may not be available or user not found." << endl;
-        }
-    }
-
-    void returnBook(int userId, int bookId) {
-        Book* book = findBookById(bookId);
-        User* user = findUserById(userId);
-        if (book && user) {
-            auto it = find(user->borrowedBooks.begin(), user->borrowedBooks.end(), bookId);
-            if (it != user->borrowedBooks.end()) {
-                user->borrowedBooks.erase(it);
-                book->isAvailable = true;
-
-                for (auto &transaction : transactions) {
-                    if (transaction.userId == userId && transaction.bookId == bookId && transaction.returnDate == 0) {
-                        transaction.returnDate = time(0);
-                        break;
-                    }
-                }
-                cout << "Book returned successfully!" << endl;
-            } else {
-                cout << "User did not borrow this book." << endl;
-            }
-        } else {
-            cout << "Return failed. Book or user not found." << endl;
-        }
-    }
-
-    void calculateFine(int userId) {
-        const double finePerDay = 1.0;  // Define fine rate
-        User* user = findUserById(userId);
-        if (!user) {
-            cout << "User not found." << endl;
             return;
         }
+    }
+    cout << "Book not found or not available!" << endl;
+}
+void searchBook() {
+    string searchQuery;
+    cin.ignore();  // Ignore leftover newline character
+    cout << "Enter book title, author, or ISBN to search: ";
+    getline(cin, searchQuery);
+    bool found = false;
+    for (const auto& book : bookDatabase) {
+        if (book.title == searchQuery || book.author == searchQuery || book.ISBN == searchQuery) {
+            cout << "Book found!" << endl;
+            cout << "Title: " << book.title << endl;
+            cout << "Author: " << book.author << endl;
+            cout << "ISBN: " << book.ISBN << endl;
+            cout << "Availability: " << (book. Available ? "Available" : "Not Available") << endl;
+            found = true;
+        }
+    }
+    if (!found) {
+        cout << "Book not found!" << endl;
+    }
+}
 
-        double totalFine = 0.0;
-        time_t now = time(0);
 
-        for (const auto &transaction : transactions) {
-            if (transaction.userId == userId && transaction.returnDate == 0) {
-                double days = difftime(now, transaction.checkoutDate) / (60 * 60 * 24);
-                if (days > 14) {  // Assume 14 days is the allowed borrowing period
-                    totalFine += (days - 14) * finePerDay;
+void returnBook() {
+    string ISBN;
+    cin.ignore();  // Ignore leftover newline character
+    cout << "Enter book ISBN to return: ";
+    getline(cin, ISBN);
+    for (auto& book : bookDatabase) {
+        if (book.ISBN == ISBN && !book. Available) {
+            book. Available = true;
+            for (auto it = borrowerDatabase.begin(); it != borrowerDatabase.end(); ++it) {
+                if (it->bookISBN == ISBN) {
+                    cout << "Enter return date (DD/MM/YYYY): ";
+                    getline(cin, it->returnDate);
+                    // Update the return date in the borrow history
+                    for (auto& record : borrowHistory) {
+                        if (record.bookISBN == ISBN && record.name == it->name && record.borrowDate == it->borrowDate) {
+                            record.returnDate = it->returnDate;
+                            break;
+                        }
+                    }
+                    borrowerDatabase.erase(it);
+                    cout << "Book returned successfully!" << endl;
+                    return;
                 }
             }
         }
-
-        cout << "Total fine for user " << user->name << " is: $" << totalFine << endl;
     }
-};
+    cout << "Book not found or not borrowed!" << endl;
+}
 
-void displayMenu() {
-    cout << "Library Management System" << endl;
-    cout << "1. Add Book" << endl;
-    cout << "2. Add User" << endl;
-    cout << "3. Search Book" << endl;
-    cout << "4. Checkout Book" << endl;
-    cout << "5. Return Book" << endl;
-    cout << "6. Calculate Fine" << endl;
-    cout << "7. Exit" << endl;
+void calculateFine() {
+    string ISBN;
+    cin.ignore();  // Ignore leftover newline character
+    cout << "Enter book ISBN to calculate fine: ";
+    getline(cin, ISBN);
+    for (const auto& record : borrowHistory) {
+        if (record.bookISBN == ISBN) {
+            if (record.returnDate.empty())
+             {
+                cout << "Book has not been returned yet!" << endl;
+                return;
+            }
+
+            int daysOverdue = daysBetweenDates(record.borrowDate, record.returnDate);
+
+            if (daysOverdue > 0) 
+            {
+                int fine = daysOverdue * 5;
+                cout << "Fine: Rs. "  << fine << endl;
+            } else {
+                cout << "No fine!" << endl;
+            }
+            return;
+        }
+    }
+    cout << "Book not found or not borrowed!" << endl;
 }
 
 int main() {
-    Library library;
-    int choice, id;
-    string title, author, name, isbn, keyword;
-
-    while (true) {
-        displayMenu();
+    int choice;
+    while (true) 
+    {
+        cout << "Library Management System" << endl;
+        cout << "1. Add book" << endl;
+        cout << "2. Search book" << endl;
+        cout << "3. Checkout book" << endl;
+        cout << "4. Return book" << endl;
+        cout << "5. Calculate fine" << endl;
+        cout << "6. Exit" << endl;
+        cout << "Enter your choice: ";
         cin >> choice;
-
         switch (choice) {
             case 1:
-                cout << "Enter Book ID: ";
-                cin >> id;
-                cin.ignore();
-                cout << "Enter Book Title: ";
-                getline(cin, title);
-                cout << "Enter Book Author: ";
-                getline(cin, author);
-                cout << "Enter Book ISBN: ";
-                getline(cin, isbn);
-                library.addBook(id, title, author, isbn);
+                addBook();
                 break;
-
             case 2:
-                cout << "Enter User ID: ";
-                cin >> id;
-                cin.ignore();
-                cout << "Enter User Name: ";
-                getline(cin, name);
-                library.addUser(id, name);
+                searchBook();
                 break;
-
             case 3:
-                cout << "Enter keyword (Title, Author, or ISBN) to Search: ";
-                cin.ignore();
-                getline(cin, keyword);
-                library.searchBook(keyword);
+                checkoutBook();
                 break;
-
             case 4:
-                cout << "Enter User ID: ";
-                cin >> id;
-                int bookId;
-                cout << "Enter Book ID: ";
-                cin >> bookId;
-                library.checkoutBook(id, bookId);
+                returnBook();
                 break;
-
             case 5:
-                cout << "Enter User ID: ";
-                cin >> id;
-                cout << "Enter Book ID: ";
-                cin >> bookId;
-                library.returnBook(id, bookId);
+                calculateFine();
                 break;
-
             case 6:
-                cout << "Enter User ID: ";
-                cin >> id;
-                library.calculateFine(id);
-                break;
-
-            case 7:
                 return 0;
-
             default:
-                cout << "Invalid choice. Please try again." << endl;
+                cout << "Invalid choice! Please try again." << endl;
         }
     }
-    return 0;
 }

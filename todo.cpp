@@ -6,7 +6,7 @@ using namespace std;
 
 struct Task {
     string description;
-    bool isComplete;
+    bool isDone;
 };
 
 vector<Task> todoList;
@@ -15,7 +15,7 @@ void displayMenu() {
     cout << "To-Do List Manager" << endl;
     cout << "-----------------" << endl;
     cout << "1. Add Task" << endl;
-    cout << "2. View Tasks" << endl;
+    cout << "2. List Tasks" << endl;
     cout << "3. Mark Task as Complete" << endl;
     cout << "4. Remove Task" << endl;
     cout << "5. Exit" << endl;
@@ -27,12 +27,12 @@ void addTask() {
     cout << "Enter a task: ";
     cin.ignore();
     getline(cin, newTask.description);
-    newTask.isComplete = false;
+    newTask.isDone = false;
     todoList.push_back(newTask);
     cout << "Task added successfully!" << endl;
 }
 
-void viewTasks() {
+void listTasks() {
     if (todoList.empty()) {
         cout << "No tasks available." << endl;
         return;
@@ -41,7 +41,7 @@ void viewTasks() {
     cout << "To-Do List:" << endl;
     for (int i = 0; i < todoList.size(); i++) {
         cout << i + 1 << ". " << todoList[i].description;
-        if (todoList[i].isComplete) {
+        if (todoList[i].isDone) {
             cout << " (Complete)";
         } else {
             cout << " (Pending)";
@@ -61,7 +61,7 @@ void markTaskAsComplete() {
     cin >> taskNumber;
 
     if (taskNumber > 0 && taskNumber <= todoList.size()) {
-        todoList[taskNumber - 1].isComplete = true;
+        todoList[taskNumber - 1].isDone = true;
         cout << "Task marked as complete successfully!" << endl;
     } else {
         cout << "Invalid task number." << endl;
@@ -98,7 +98,7 @@ int main() {
                 addTask();
                 break;
             case 2:
-                viewTasks();
+                listTasks();
                 break;
             case 3:
                 markTaskAsComplete();
@@ -116,3 +116,4 @@ int main() {
     }
 
     return 0;
+}

@@ -108,7 +108,7 @@ void f1()
           cout<<"there is no empty space"<<endl;
           f2();
       }
-      f1();
+      
   }
    
    bool f3()// conditions for winning the game

@@ -12,19 +12,19 @@ int main()
     switch(choice)
     {
         case 1:total=num1+num2;
-        cout<<total;
+        cout<<"The sum of two numbers is:"<<total;
         break;
         
          case 2:total=num1-num2;
-        cout<<total;
+        cout<<"The difference of two numbers is:"<<total;
         break;
         
          case 3:total=num1*num2;
-        cout<<total;
+        cout<<"The multiplication of two numbers is:"<<total;
         break;
         
          case 4:total=num1/num2;
-        cout<<total;
+        cout<<"The division of two numbers is:"<<total;
         break;
         
         case 5:default:
